@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Lucas - Previsão de Preços de Energia</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .tabs {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            gap: 0.5rem;
+            padding: 0 2rem;
+        }
+        .tab {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #6b7280;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab:hover {
+            color: #374151;
+        }
+        .tab.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+        .content {
+            padding: 2rem;
+        }
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+        .grid {
+            display: grid;
+            gap: 1rem;
+        }
+        .grid-4 {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+        .metric-card {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-left: 4px solid;
+        }
+        .metric-title {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+        .metric-value {
+            font-size: 1.875rem;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        .metric-trend {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .trend-up { color: #10b981; }
+        .trend-down { color: #ef4444; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #f9fafb;
+            padding: 0.75rem;
+            text-align: left;
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        td {
+            padding: 1rem 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        tr:hover {
+            background: #f9fafb;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .badge-green {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .badge-red {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .alert {
+            border-left: 4px solid;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .alert-red {
+            background: #fef2f2;
+            border-color: #ef4444;
+        }
+        .alert-green {
+            background: #f0fdf4;
+            border-color: #10b981;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+        .btn-secondary {
+            background: #8b5cf6;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #7c3aed;
+        }
+        .btn-outline {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .btn-outline:hover {
+            background: #e5e7eb;
+        }
+        h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .chart-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .chart-label {
+            width: 80px;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        .chart-bar-bg {
+            flex: 1;
+            height: 30px;
+            background: #f3f4f6;
+            border-radius: 0.25rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .chart-bar-fill {
+            height: 100%;
+            transition: width 0.5s;
+        }
+        .chart-value {
+            width: 80px;
+            text-align: right;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-left: 0.5rem;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1 style="font-size: 1.875rem; font-weight: bold; margin-bottom: 0.5rem;">
+                Sistema de Previsão de Preços de Energia (LUCAS)
+            </h1>
+            <p style="color: #bfdbfe;">
+                Análise Real - Submercado Sudeste (716 registros, 2012-2025)
+            </p>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('overview')">📊 Visão Geral</button>
+        <button class="tab" onclick="showTab('analysis')">📈 Análise Detalhada</button>
+        <button class="tab" onclick="showTab('insights')">💡 Insights</button>
+        <button class="tab" onclick="showTab('data')">💾 Dados</button>
+    </div>
+
+    <div class="container content">
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content">
+            <div class="card">
+                <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;">
+                    Selecionar Modelo:
+                </label>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn btn-primary" onclick="selectModel('baseline')">
+                        Modelo Baseline
+                    </button>
+                    <button class="btn btn-outline" onclick="selectModel('improved')">
+                        Modelo Melhorado
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-4">
+                <div class="metric-card" style="border-left-color: #ef4444;">
+                    <div class="metric-title">Curto Prazo (M+)</div>
+                    <div class="metric-value">-121.2%</div>
+                    <div class="metric-trend trend-down">
+                        📉 Piorou
+                    </div>
+                </div>
+                <div class="metric-card" style="border-left-color: #10b981;">
+                    <div class="metric-title">Longo Prazo (A+)</div>
+                    <div class="metric-value">+45.4%</div>
+                    <div class="metric-trend trend-up">
+                        📈 Melhorou
+                    </div>
+                </div>
+                <div class="metric-card" style="border-left-color: #8b5cf6;">
+                    <div class="metric-title">Melhor Melhoria</div>
+                    <div class="metric-value">A+4</div>
+                    <div class="metric-trend">68.6%</div>
+                </div>
+                <div class="metric-card" style="border-left-color: #f59e0b;">
+                    <div class="metric-title">Registros Testados</div>
+                    <div class="metric-value">144</div>
+                    <div class="metric-trend">20%</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Performance por Maturidade (MAPE %)</h3>
+                <div id="chart-container"></div>
+            </div>
+
+            <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="alert alert-red">
+                    <strong style="color: #991b1b;">📉 Curto Prazo (M+)</strong>
+                    <p style="margin-top: 0.5rem; color: #7f1d1d; font-size: 0.875rem;">
+                        Ensemble teve performance inferior ao baseline. 
+                        Alta volatilidade favorece métodos conservadores.
+                    </p>
+                </div>
+                <div class="alert alert-green">
+                    <strong style="color: #065f46;">✅ Longo Prazo (A+)</strong>
+                    <p style="margin-top: 0.5rem; color: #064e3b; font-size: 0.875rem;">
+                        Ensemble apresentou melhorias significativas (45.4% em média).
+                        Análise de tendências funciona bem em horizontes longos.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analysis Tab -->
+        <div id="analysis" class="tab-content hidden">
+            <div class="card">
+                <h3>Comparação Detalhada</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Maturidade</th>
+                            <th>Baseline MAPE</th>
+                            <th>Melhorado MAPE</th>
+                            <th>Melhoria</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>M + 0</strong></td>
+                            <td>6.37%</td>
+                            <td>7.19%</td>
+                            <td><span class="badge badge-red">-12.8%</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>M + 1</strong></td>
+                            <td>0.67%</td>
+                            <td>2.32%</td>
+                            <td><span class="badge badge-red">-248.3%</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>M + 2</strong></td>
+                            <td>1.31%</td>
+                            <td>2.48%</td>
+                            <td><span class="badge badge-red">-88.8%</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>M + 3</strong></td>
+                            <td>0.59%</td>
+                            <td>1.75%</td>
+                            <td><span class="badge badge-red">-195.0%</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>A + 0</strong></td>
+                            <td>6.24%</td>
+                            <td>5.49%</td>
+                            <td><span class="badge badge-green">+11.9%</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>A + 1</strong></td>
+                            <td>4.49%</td>
+                            <td>2.46%</td>
+                            <td><span class="badge badge-green">+45.1%</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>A + 2</strong></td>
+                            <td>3.90%</td>
+                            <td>2.12%</td>
+                            <td><span class="badge badge-green">+45.5%</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>A + 3</strong></td>
+                            <td>2.22%</td>
+                            <td>0.96%</td>
+                            <td><span class="badge badge-green">+56.9%</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>A + 4</strong></td>
+                            <td>1.66%</td>
+                            <td>0.52%</td>
+                            <td><span class="badge badge-green">+68.6%</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Insights Tab -->
+        <div id="insights" class="tab-content hidden">
+            <div class="card">
+                <h3>Análise Crítica dos Resultados</h3>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">
+                        1. Por que o Ensemble Falhou em Curto Prazo? Eu acho que:
+                    </h4>
+                    <ul style="margin-left: 1.5rem; color: #6b7280; line-height: 1.6;">
+                        <li>Maturidades M+ têm volatilidade muito altaa (difícil de modelar)</li>
+                        <li>Ensemble pode estar "over-smoothing" mudanças bruscas</li>
+                        <li>Features de tendência e sazonalidade adicionam ruído</li>
+                    </ul>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">
+                        2. Por que Funcionou em Longo Prazo? Eu acho que:
+                    </h4>
+                    <ul style="margin-left: 1.5rem; color: #6b7280; line-height: 1.6;">
+                        <li>Maturidades A+ são mais estáveis e previsíveis</li>
+                        <li>Correlações entre maturidades são mais fortes</li>
+                        <li>Tendências de longo prazo são mais confiáveis</li>
+                    </ul>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">
+                        3. Conclusão Principal
+                    </h4>
+                    <p style="color: #6b7280; line-height: 1.6; margin-left: 1rem;">
+                        <strong>Não existe modelo único ideal.</strong> Os resultados sugerem uma 
+                        abordagem híbrida: usar baseline para curto prazo (M+) e ensemble para longo prazo (A+).
+                    </p>
+                </div>
+
+                <div>
+                    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">
+                        4. Próximos Passos que talvez faça diferença
+                    </h4>
+                    <ul style="margin-left: 1.5rem; color: #6b7280; line-height: 1.6;">
+                        <li>Implementar modelo híbrido (baseline para M+, ensemble para A+)</li>
+                        <li>Testar com validação cruzada temporal</li>
+                        <li>Otimizar hiperparâmetros usando grid search</li>
+                        <li>Integrar dados históricos do Newave</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Tab -->
+        <div id="data" class="tab-content hidden">
+            <div class="card">
+                <h3>Informações do Experimento</h3>
+                <div class="grid grid-4">
+                    <div style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem;">
+                        <div style="font-size: 0.875rem; color: #6b7280;">Total Registros</div>
+                        <div style="font-size: 1.875rem; font-weight: bold; margin-top: 0.25rem;">716</div>
+                    </div>
+                    <div style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem;">
+                        <div style="font-size: 0.875rem; color: #6b7280;">Treino</div>
+                        <div style="font-size: 1.875rem; font-weight: bold; margin-top: 0.25rem;">572</div>
+                        <div style="font-size: 0.75rem; color: #9ca3af; margin-top: 0.25rem;">79.9%</div>
+                    </div>
+                    <div style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem;">
+                        <div style="font-size: 0.875rem; color: #6b7280;">Teste</div>
+                        <div style="font-size: 1.875rem; font-weight: bold; margin-top: 0.25rem;">144</div>
+                        <div style="font-size: 0.75rem; color: #9ca3af; margin-top: 0.25rem;">20.1%</div>
+                    </div>
+                    <div style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem;">
+                        <div style="font-size: 0.875rem; color: #6b7280;">Passos</div>
+                        <div style="font-size: 1.875rem; font-weight: bold; margin-top: 0.25rem;">3</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const data = [
+            {name: 'M + 0', baseline: 6.37, improved: 7.19},
+            {name: 'M + 1', baseline: 0.67, improved: 2.32},
+            {name: 'M + 2', baseline: 1.31, improved: 2.48},
+            {name: 'M + 3', baseline: 0.59, improved: 1.75},
+            {name: 'A + 0', baseline: 6.24, improved: 5.49},
+            {name: 'A + 1', baseline: 4.49, improved: 2.46},
+            {name: 'A + 2', baseline: 3.90, improved: 2.12},
+            {name: 'A + 3', baseline: 2.22, improved: 0.96},
+            {name: 'A + 4', baseline: 1.66, improved: 0.52}
+        ];
+
+        function renderChart() {
+            const container = document.getElementById('chart-container');
+            const max = Math.max(...data.map(d => Math.max(d.baseline, d.improved)));
+            
+            container.innerHTML = data.map(d => `
+                <div class="chart-bar">
+                    <div class="chart-label">${d.name}</div>
+                    <div class="chart-bar-bg">
+                        <div class="chart-bar-fill" style="width: ${(d.baseline/max*100)}%; background: #3b82f6;"></div>
+                    </div>
+                    <div class="chart-value">${d.baseline.toFixed(2)}%</div>
+                </div>
+                <div class="chart-bar">
+                    <div class="chart-label"></div>
+                    <div class="chart-bar-bg">
+                        <div class="chart-bar-fill" style="width: ${(d.improved/max*100)}%; background: #8b5cf6;"></div>
+                    </div>
+                    <div class="chart-value">${d.improved.toFixed(2)}%</div>
+                </div>
+            `).join('');
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.remove('hidden');
+        }
+
+        function selectModel(model) {
+            const buttons = document.querySelectorAll('.card button');
+            buttons.forEach(b => {
+                b.className = 'btn btn-outline';
+            });
+            event.target.className = model === 'baseline' ? 'btn btn-primary' : 'btn btn-secondary';
+        }
+
+        renderChart();
+    </script>
+</body>
+</html>
