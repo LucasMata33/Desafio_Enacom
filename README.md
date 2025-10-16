@@ -15,17 +15,10 @@ python --version
 pip install -r requirements.txt
 ```
 
-### Executar Simulação
+### Executar
 ```bash
-# Executar simulação básica
-python main.py
-
-# Executar testes
-python -m pytest tests/
-
-# Executar testes com cobertura
-python -m pytest tests/ --cov=.
-```
+# Executar 
+python main_comparison.py
 
 ## 🏗️ Estrutura do Sistema
 
